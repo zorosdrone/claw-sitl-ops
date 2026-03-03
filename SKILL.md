@@ -1,6 +1,6 @@
 ---
 name: sitl-ops
-description: Operate ArduPilot SITL via MAVLink (status, arm, takeoff, mode, param get/set) and report concise state for Discord or chat. Use when user asks to control SITL vehicle or query live vehicle telemetry/state.
+description: Operate ArduPilot SITL via MAVLink (start/stop/status, arm, takeoff, mode, param get/set) and report concise state for Discord or chat. Use when user asks to control SITL vehicle or query live vehicle telemetry/state.
 ---
 
 # SITL Ops (ArduPilot MAVLink)
@@ -70,6 +70,8 @@ When request comes from Discord, keep responses short:
 - Error reason (if any)
 
 Recommended Discord command mapping:
+- `!sitl start`
+- `!sitl stop`
 - `!sitl status`
 - `!sitl arm`
 - `!sitl takeoff 10`
@@ -125,5 +127,12 @@ nohup env PATH="/home/hfuji/.openclaw/workspace/GitHub/ardupilot/.venv/bin:$PATH
 - `setup_venv.sh` installs `pymavlink`, `empy==3.3.4`, and `MAVProxy`.
 - Dispatcher prefers `~/.openclaw/workspace/.venv/bin/python` when present.
 - Override Python with `SITL_VENV_PYTHON=/path/to/python`.
-- Default MAVLink endpoint is `udp:127.0.0.1:14550`.
-- Override endpoint with `SITL_MASTER=udp:127.0.0.1:14551`.
+- `!sitl start/stop` uses `sim_vehicle.py` and supports:
+  - `SITL_AP_ROOT` (default: `/home/hfuji/.openclaw/workspace/GitHub/ardupilot`)
+  - `SITL_AP_VENV_ACTIVATE` (default: `/home/hfuji/venv-ardupilot/bin/activate`)
+  - `SITL_START_ARGS` (default: `-v Copter -L Kawachi --no-mavproxy`)
+  - `SITL_LOG` (default: `/tmp/sitl_copter.log`)
+- Command endpoint auto-resolution (when `SITL_MASTER` unset):
+  - if `mavproxy.py` is running: `udp:127.0.0.1:14550`
+  - else if SITL TCP is listening: `tcp:127.0.0.1:5760`
+- Override endpoint with `SITL_MASTER=udp:127.0.0.1:14551` (or tcp).
