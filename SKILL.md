@@ -12,6 +12,8 @@ Use this skill for **SITL only** operations.
 - Do not send control commands unless user explicitly asks.
 - For potentially risky commands (arm/takeoff/mode/param set), confirm intent if ambiguous.
 
+If `~/.openclaw/workspace/.sitl-ops.env` exists, dispatcher loads it automatically before resolving endpoints or start/stop settings.
+
 ## Setup (one-time)
 
 ```bash
@@ -84,6 +86,37 @@ Execution pattern:
 2. Run `bash skills/sitl-ops/scripts/sitl_dispatch.sh "<user_message>"`
 3. Return concise result + one-line state summary
 
+### Persistent config file
+
+You can persist settings without `export` by creating:
+
+```bash
+~/.openclaw/workspace/.sitl-ops.env
+```
+
+Start from one of these:
+
+```bash
+cp skills/sitl-ops/sitl-ops.local.env.example ~/.openclaw/workspace/.sitl-ops.env
+cp skills/sitl-ops/sitl-ops.remote.env.example ~/.openclaw/workspace/.sitl-ops.env
+```
+
+Use `sitl-ops.local.env.example` for same-host Linux operation.
+
+Use `sitl-ops.remote.env.example` for VPS + WSL split operation.
+
+Typical remote WSL settings:
+
+```bash
+SITL_MASTER="udp:100.64.10.20:14550"
+SITL_REMOTE_SSH_TARGET="user@100.64.10.20"
+SITL_REMOTE_AP_ROOT="$HOME/ardupilot"
+SITL_REMOTE_AP_VENV_ACTIVATE="$HOME/venv-ardupilot/bin/activate"
+SITL_REMOTE_START_ARGS="-v Copter -L Kawachi --no-mavproxy --out=0.0.0.0:14550"
+```
+
+When `SITL_REMOTE_SSH_TARGET` is set, `!sitl start` and `!sitl stop` are executed over SSH on that remote host.
+
 ## Build/Dependency Recovery Playbook (mandatory when build fails)
 When SITL build/start fails due missing Python package(s), attempt auto-recovery before reporting failure.
 
@@ -132,7 +165,15 @@ nohup env PATH="/home/hfuji/.openclaw/workspace/GitHub/ardupilot/.venv/bin:$PATH
   - `SITL_AP_VENV_ACTIVATE` (default: `/home/hfuji/venv-ardupilot/bin/activate`)
   - `SITL_START_ARGS` (default: `-v Copter -L Kawachi --no-mavproxy`)
   - `SITL_LOG` (default: `/tmp/sitl_copter.log`)
+- Remote `!sitl start/stop` over SSH is enabled when these are set:
+  - `SITL_REMOTE_SSH_TARGET` (example: `user@100.64.10.20`)
+  - `SITL_REMOTE_SSH_PORT` (default: `22`)
+  - `SITL_REMOTE_AP_ROOT`
+  - `SITL_REMOTE_AP_VENV_ACTIVATE`
+  - `SITL_REMOTE_START_ARGS`
+  - `SITL_REMOTE_LOG`
 - Command endpoint auto-resolution (when `SITL_MASTER` unset):
   - if `mavproxy.py` is running: `udp:127.0.0.1:14550`
   - else if SITL TCP is listening: `tcp:127.0.0.1:5760`
 - Override endpoint with `SITL_MASTER=udp:127.0.0.1:14551` (or tcp).
+- Dispatcher auto-loads config from `~/.openclaw/workspace/.sitl-ops.env` or `~/.openclaw/workspace/skills/sitl-ops/.sitl-ops.env`.
